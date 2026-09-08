@@ -30,6 +30,22 @@ def test_remove_recursao_direta_com_duas_alternativas():
     ]
 
 
+def test_remove_autorrecursao_sem_sufixo():
+    grammar = Grammar.from_text(
+        """
+        A ::= A | b
+        """
+    )
+
+    assert grammar.eliminate_direct_left_recursion("A") is True
+    assert rules(grammar, "A") == [("b",)]
+    assert grammar.nonterminals == ["A"]
+    assert all(
+        not production.rhs or production.rhs[0] != production.lhs
+        for production in grammar.productions
+    )
+
+
 def test_first_percorre_sequencias_anulaveis_ate_o_ponto_fixo():
     grammar = Grammar.from_text(
         """

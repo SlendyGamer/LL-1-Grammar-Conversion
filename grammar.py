@@ -255,17 +255,28 @@ class Grammar:
 
         recursao: list[tuple[str, ...]] = []  # Produções 'a', com próprio não terminal a esquerda (ex - A: A a)
         not_recursao: list[tuple[str, ...]] = []  # Produções 'b', sem o próprio não terminal a esquerda (ex - A: b)
+        encontrou_recursao = False
 
         # percorre produções, separando o que é recursivo e oq não é
         for prod in producoes:
             if prod.rhs and prod.rhs[0] == nonterminal:
-                recursao.append(prod.rhs[1:])  # guarda apenas a, não A
+                encontrou_recursao = True
+                sufixo = prod.rhs[1:]  # guarda apenas a, não A
+
+                # A produção A -> A não possui sufixo e pode ser descartada
+                if sufixo:
+                    recursao.append(sufixo)
             else:
                 not_recursao.append(prod.rhs)  # guarda b
 
         # Se nao detectar recursão nas produções, retorna falso
-        if not recursao:
+        if not encontrou_recursao:
             return False
+
+        # Se havia apenas autorrecursões sem sufixo (A -> A), basta descartá-las, mantendo as produções não recursivas
+        if not recursao:
+            self._replace_productions(nonterminal, not_recursao)
+            return True
 
         # Cria a nova produção intermediária A' e o insere logo depois do A na lista
         aux = self._fresh_nonterminal(nonterminal)
